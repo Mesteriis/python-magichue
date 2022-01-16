@@ -8,7 +8,4 @@ def str_bulb_type(bulb_type):
         return 'rgbww'
     if bulb_type == BULB_TAPE:
         return 'tape'
-    if bulb_type == BULB_RGBWWCW:
-        return 'rgbwwcw'
-    else:
-        return 'UNKNOWN'
+    return 'rgbwwcw' if bulb_type == BULB_RGBWWCW else 'UNKNOWN'
