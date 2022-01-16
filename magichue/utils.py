@@ -7,14 +7,12 @@ __all__ = [
 def speed2slowness(value):
     """speed: float value 0 to 1.0
     slowness: integer value 1 to 31"""
-    slowness = int(-30 * value + 31)
-    return slowness
+    return int(-30 * value + 31)
 
 
 def slowness2speed(value):
     """invert function of speed2slowness"""
-    speed = (31 - value) / 30
-    return speed
+    return (31 - value) / 30
 
 
 def round_value(value, _min, _max):

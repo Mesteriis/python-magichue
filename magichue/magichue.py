@@ -74,28 +74,28 @@ class Status(object):
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
-        if self.bulb_type == bulb_types.BULB_RGBWWCW:
-            data = [
+        return (
+            [
                 commands.SET_COLOR,
                 self.r,
                 self.g,
                 self.b,
-                self.w if self.w else 0,
+                self.w or 0,
                 self.cw,
                 is_white,
-                0x0f  # 0x0f is a terminator
+                0x0F,
             ]
-        else:
-            data = [
+            if self.bulb_type == bulb_types.BULB_RGBWWCW
+            else [
                 commands.SET_COLOR,
                 self.r,
                 self.g,
                 self.b,
-                self.w if self.w else 0,
+                self.w or 0,
                 is_white,
-                0x0f  # 0x0f is a terminator
+                0x0F,
             ]
-        return data
+        )
 
 
 class Light(object):
@@ -106,25 +106,24 @@ class Light(object):
         on = 'on' if self.on else 'off'
         if self._status.mode.value != modes._NORMAL:
             return '<Light: %s (%s)>' % (on, self._status.mode.name)
-        else:
-            if self._status.bulb_type == bulb_types.BULB_RGBWW:
-                return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
-                    on,
-                    *(self._status.rgb()),
-                    self._status.w,
-                )
-            if self._status.bulb_type == bulb_types.BULB_RGBWWCW:
-                return '<Light: {} (r:{} g:{} b:{} w:{} cw:{})>'.format(
-                    on,
-                    *(self._status.rgb()),
-                    self._status.w,
-                    self._status.cw,
-                )
-            if self._status.bulb_type == bulb_types.BULB_TAPE:
-                return '<Light: {} (r:{} g:{} b:{})>'.format(
-                    on,
-                    *(self._status.rgb()),
-                )
+        if self._status.bulb_type == bulb_types.BULB_RGBWW:
+            return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
+                on,
+                *(self._status.rgb()),
+                self._status.w,
+            )
+        if self._status.bulb_type == bulb_types.BULB_RGBWWCW:
+            return '<Light: {} (r:{} g:{} b:{} w:{} cw:{})>'.format(
+                on,
+                *(self._status.rgb()),
+                self._status.w,
+                self._status.cw,
+            )
+        if self._status.bulb_type == bulb_types.BULB_TAPE:
+            return '<Light: {} (r:{} g:{} b:{})>'.format(
+                on,
+                *(self._status.rgb()),
+            )
 
     def __init__(
             self,
@@ -161,8 +160,7 @@ class Light(object):
         data = struct.pack(format_str, *data_with_checksum)
         self._send(data)
         if receive:
-            response = self._receive(response_len)
-            return response
+            return self._receive(response_len)
 
     def _turn_on(self):
         on_data = [commands.TURN_ON_1, commands.TURN_ON_2, commands.TURN_ON_3]
@@ -199,8 +197,7 @@ class Light(object):
 
     def _calc_checksum(self, data):
         hex_checksum = hex(sum(data))
-        checksum = int(hex_checksum[-2:], 16)
-        return checksum
+        return int(hex_checksum[-2:], 16)
 
     def _attach_checksum(self, data):
         checksum = self._calc_checksum(data)
@@ -218,11 +215,10 @@ class Light(object):
             cmd,
             commands.RESPONSE_LEN_QUERY_STATUS,
         )
-        data = struct.unpack(
+        return struct.unpack(
             '!%dB' % commands.RESPONSE_LEN_QUERY_STATUS,
             raw_data
         )
-        return data
 
     def _update_status(self):
         data = self._get_status_data()
@@ -323,12 +319,11 @@ class Light(object):
 
     @property
     def hue(self):
-        h = colorsys.rgb_to_hsv(*self._status.rgb())[0]
-        return h
+        return colorsys.rgb_to_hsv(*self._status.rgb())[0]
 
     @hue.setter
     def hue(self, h):
-        if not h <= 1:
+        if h > 1:
             raise ValueError("arg must not be more than 1")
         sb = colorsys.rgb_to_hsv(*self._status.rgb())[1:]
         rgb = map(int, colorsys.hsv_to_rgb(h, *sb))
@@ -337,12 +332,11 @@ class Light(object):
 
     @property
     def saturation(self):
-        s = colorsys.rgb_to_hsv(*self._status.rgb())[1]
-        return s
+        return colorsys.rgb_to_hsv(*self._status.rgb())[1]
 
     @saturation.setter
     def saturation(self, s):
-        if not s <= 1:
+        if s > 1:
             raise ValueError("arg must not be more than 1")
         h, v = colorsys.rgb_to_hsv(*self._status.rgb())[::2]
         rgb = map(int, colorsys.hsv_to_rgb(h, s, v))
@@ -351,11 +345,7 @@ class Light(object):
 
     @property
     def brightness(self):
-        if self.is_white:
-            b = self.w
-        else:
-            b = colorsys.rgb_to_hsv(*self._status.rgb())[2]
-        return b
+        return self.w if self.is_white else colorsys.rgb_to_hsv(*self._status.rgb())[2]
 
     @brightness.setter
     def brightness(self, v):

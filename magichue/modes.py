@@ -58,8 +58,7 @@ class Mode:
 
     def _make_data(self):  # slowness is a integer value 1 to 49
         slowness = speed2slowness(self.speed)
-        d = [CHANGE_MODE, self.value, slowness, 0x0f]
-        return d
+        return [CHANGE_MODE, self.value, slowness, 0x0f]
 
 
 class CustomMode(Mode):
@@ -85,8 +84,7 @@ class CustomMode(Mode):
         if len(self.colors) < 16:
             diff = 16 - len(self.colors)
             return self.colors + blank_colors * diff
-        if len(self.colors) >= 16:
-            return self.colors[:16]
+        return self.colors[:16]
 
     def _make_colors_list(self):
         ls = []
@@ -99,12 +97,11 @@ class CustomMode(Mode):
         return ls
 
     def _make_data(self):
-        data = [CUSTOM_MODE]\
+        return [CUSTOM_MODE]\
             + self._color_list\
             + [speed2slowness(self.speed)]\
             + [self.mode]\
             + [CUSTOM_MODE_TERMINATOR_1, CUSTOM_MODE_TERMINATOR_2]
-        return data
 
 
 _RAINBOW_CROSSFADE = 0x25
